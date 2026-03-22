@@ -1,5 +1,25 @@
-# Large data files
-data/raw/
-data/processed/*.csv
+# Python
 venv/
+__pycache__/
+*.pyc
+*.pyo
 *.so
+*.egg-info/
+
+# Data files (too large for GitHub)
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.pkl
+*.h5
+
+# ML artifacts
+mlruns/
+*.model
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
