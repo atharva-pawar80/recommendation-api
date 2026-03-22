@@ -15,6 +15,18 @@ for new users.
 - Serving: p95 latency < 100ms
 - Cold start: All users get recommendations (zero fallback failures)
 
+## Model Performance
+
+ALS NDCG@10: Low on time-based split — expected behavior.
+Root cause: 40% of test items are new products launched after
+training cutoff. Model cannot recommend items it has never seen.
+
+Production solution: Daily retraining pipeline ensures model
+always knows recent items. Cold start handled via popularity
+fallback for new items.
+
+Baseline NDCG@10: 0.0153
+
 ## Baseline
 Global top-10 most rated items shown to everyone.
 
