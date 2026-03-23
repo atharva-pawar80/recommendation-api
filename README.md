@@ -60,3 +60,39 @@ data/raw/
 *.pkl
 mlruns/
 .ipynb_checkpoints/
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/health` | GET | Health check |
+| `/recommend/{user_id}` | GET | Get personalized recommendations |
+| `/recommend/batch` | POST | Batch recommendations |
+
+## Results
+
+### API Performance
+- Known user → ALS model inference
+- Unknown user → cold start popularity fallback
+- Health check → model + redis status
+
+### Example Response
+```json
+{
+  "user_id": "A1N63KPEPN5HVU",
+  "recommendations": [
+    {"item_id": "B0074BW614", "score": 4.4915},
+    {"item_id": "B00DR0PDNE", "score": 3.931}
+  ],
+  "model_version": "als_v1",
+  "served_from": "als_model",
+  "total": 5
+}
+```
+
+## Architecture
+- FastAPI REST API
+- ALS Collaborative Filtering (implicit library)
+- Cold start fallback → popularity based
+- Redis caching (Week 4)
+- Docker + GCP Cloud Run (Week 4)
