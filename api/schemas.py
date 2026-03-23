@@ -21,6 +21,7 @@ class RecommendationResponse(BaseModel):
     total           : int
 
 class HealthResponse(BaseModel):
-    status        : str
-    model_loaded  : bool
+    model_config = {"protected_namespaces": ()}
+    status         : str
+    model_loaded   : bool
     redis_connected: bool
