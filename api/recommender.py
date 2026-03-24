@@ -46,9 +46,10 @@ class Recommender:
             self.is_loaded = False
 
     # ── Build sparse matrix ───────────────────────────
-    def _build_matrix(self):
-        print("Building interaction matrix...")
-        df = pd.read_csv("data/processed/ratings_clean.csv")
+def _build_matrix(self):
+    print("Building interaction matrix...")
+    try:
+        df = pd.read_csv("data/processed/ratings_clean.csv", nrows=50000)
         df['user_idx'] = df['user_id'].map(self.user_encoder)
         df['item_idx'] = df['item_id'].map(self.item_encoder)
         df = df.dropna(subset=['user_idx', 'item_idx'])
@@ -64,6 +65,8 @@ class Recommender:
             shape=(n_users, n_items)
         )
         print(f"✓ Matrix built: {self.train_matrix.shape}")
+    except Exception as e:
+        print(f"✗ Matrix build failed: {e}")
 
     # ── Connect to Redis ──────────────────────────────
     def connect_redis(self):

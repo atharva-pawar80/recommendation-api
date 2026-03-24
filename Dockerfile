@@ -2,25 +2,27 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
+    gcc g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (better layer caching)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir \
+    fastapi==0.111.0 \
+    uvicorn==0.30.0 \
+    pydantic==2.7.0 \
+    pandas==2.2.0 \
+    numpy==1.26.0 \
+    scikit-learn==1.4.0 \
+    implicit==0.7.2 \
+    scipy==1.13.0 \
+    redis==5.0.4
 
-# Copy source code
 COPY api/ ./api/
-COPY src/ ./src/
 COPY models/ ./models/
 COPY data/processed/popularity_baseline.csv ./data/processed/
 COPY data/processed/ratings_clean.csv ./data/processed/
 
-# Expose port
 EXPOSE 8080
 
-# Start command
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080"]
