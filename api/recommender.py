@@ -23,46 +23,37 @@ class Recommender:
         self.redis_ok     = False
 
     # ── Load model from disk ──────────────────────────
-    def load_model(self):
-        print("Loading ALS model...")
-        try:
-            with open(f"{MODEL_DIR}/als_model.pkl",     "rb") as f:
-                self.model        = pickle.load(f)
-            with open(f"{MODEL_DIR}/user_encoder.pkl",  "rb") as f:
-                self.user_encoder = pickle.load(f)
-            with open(f"{MODEL_DIR}/item_encoder.pkl",  "rb") as f:
-                self.item_encoder = pickle.load(f)
-            with open(f"{MODEL_DIR}/user_decoder.pkl",  "rb") as f:
-                self.user_decoder = pickle.load(f)
-            with open(f"{MODEL_DIR}/item_decoder.pkl",  "rb") as f:
-                self.item_decoder = pickle.load(f)
+def load_model(self):
+    print("Loading ALS model...")
+    try:
+        with open(f"{MODEL_DIR}/als_model.pkl",     "rb") as f:
+            self.model        = pickle.load(f)
+        with open(f"{MODEL_DIR}/user_encoder.pkl",  "rb") as f:
+            self.user_encoder = pickle.load(f)
+        with open(f"{MODEL_DIR}/item_encoder.pkl",  "rb") as f:
+            self.item_encoder = pickle.load(f)
+        with open(f"{MODEL_DIR}/user_decoder.pkl",  "rb") as f:
+            self.user_decoder = pickle.load(f)
+        with open(f"{MODEL_DIR}/item_decoder.pkl",  "rb") as f:
+            self.item_decoder = pickle.load(f)
 
-            # Build interaction matrix
-            self._build_matrix()
-            self.is_loaded = True
-            print("✓ Model loaded successfully")
-        except Exception as e:
-            print(f"✗ Model loading failed: {e}")
-            self.is_loaded = False
+        # Build small matrix for inference
+        self._build_matrix()
+        self.is_loaded = True
+        print("✓ Model loaded successfully")
+    except Exception as e:
+        print(f"✗ Model loading failed: {e}")
+        self.is_loaded = False
 
-    # ── Build sparse matrix ───────────────────────────
 def _build_matrix(self):
     print("Building interaction matrix...")
     try:
-        df = pd.read_csv("data/processed/ratings_clean.csv", nrows=50000)
-        df['user_idx'] = df['user_id'].map(self.user_encoder)
-        df['item_idx'] = df['item_id'].map(self.item_encoder)
-        df = df.dropna(subset=['user_idx', 'item_idx'])
-        df['user_idx'] = df['user_idx'].astype(int)
-        df['item_idx'] = df['item_idx'].astype(int)
-
-        n_users = df['user_idx'].max() + 1
-        n_items = df['item_idx'].max() + 1
-
+        # Use encoders to build minimal matrix
+        n_users = len(self.user_encoder)
+        n_items = len(self.item_encoder)
+        # Build empty matrix — model factors already learned
         self.train_matrix = sparse.csr_matrix(
-            (df['rating'].values * 40,
-             (df['user_idx'].values, df['item_idx'].values)),
-            shape=(n_users, n_items)
+            (n_users, n_items)
         )
         print(f"✓ Matrix built: {self.train_matrix.shape}")
     except Exception as e:
