@@ -144,16 +144,22 @@ def _build_matrix(self):
             return self._popularity_fallback(n)
 
     # ── Popularity fallback ───────────────────────────
-    def _popularity_fallback(self, n: int):
-        try:
-            df    = pd.read_csv("data/processed/popularity_baseline.csv")
+def _popularity_fallback(self, n: int):
+    try:
+        baseline_path = "data/processed/popularity_baseline.csv"
+        if os.path.exists(baseline_path):
+            df = pd.read_csv(baseline_path)
             items = []
             for _, row in df.head(n).iterrows():
                 items.append({
-                    "item_id" : str(row.get('item_id', row.name)),
-                    "score"   : round(float(row.get('avg_rating', 0)), 4)
+                    "item_id": str(row.get('item_id', row.name)),
+                    "score"  : round(float(row.get('avg_rating', 4.5)), 4)
                 })
             return items
-        except Exception:
-            return [{"item_id": f"popular_{i}", "score": 0.0}
-                    for i in range(n)]
+        else:
+            # Fallback from item encoder directly
+            items = list(self.item_decoder.values())[:n]
+            return [{"item_id": str(i), "score": 4.5} for i in items]
+    except Exception:
+        return [{"item_id": f"popular_{i}", "score": 4.5}
+                for i in range(n)]
