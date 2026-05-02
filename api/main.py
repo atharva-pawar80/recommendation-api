@@ -55,7 +55,6 @@ def health():
          response_model=RecommendationResponse)
 def get_recommendations(user_id: str, n: int = 10):
 
-    # Validate n
     if n < 1 or n > 100:
         raise HTTPException(
             status_code=422,
@@ -74,6 +73,20 @@ def get_recommendations(user_id: str, n: int = 10):
     items, served_from = recommender.recommend(user_id, n)
 
     latency_ms = round((time.time() - start_time) * 1000, 2)
+
+    # ── Log request for monitoring ────────────────────
+    log_entry = {
+        "timestamp"  : datetime.now().isoformat(),
+        "user_id"    : user_id,
+        "served_from": served_from,
+        "latency_ms" : latency_ms,
+        "n"          : n,
+        "is_cold_start": served_from == "cold_start_fallback"
+    }
+    request_logs.append(log_entry)
+    if len(request_logs) > MAX_LOGS:
+        request_logs.pop(0)
+
     print(f"[{user_id}] served_from={served_from} latency={latency_ms}ms")
 
     return RecommendationResponse(
@@ -84,20 +97,40 @@ def get_recommendations(user_id: str, n: int = 10):
         total           = len(items)
     )
 
-# ── Batch endpoint ────────────────────────────────────
-@app.post("/recommend/batch")
-def get_batch_recommendations(user_ids: list[str], n: int = 10):
-    if len(user_ids) > 100:
-        raise HTTPException(
-            status_code=422,
-            detail="Maximum 100 users per batch request"
-        )
-
-    results = {}
-    for user_id in user_ids:
-        items, served_from = recommender.recommend(user_id, n)
-        results[user_id]   = {
-            "recommendations": items,
-            "served_from"    : served_from
+# ── Monitoring data endpoint ──────────────────────────
+@app.get("/monitoring/stats")
+def get_monitoring_stats():
+    if not request_logs:
+        return {
+            "total_requests"   : 0,
+            "avg_latency_ms"   : 0,
+            "cold_start_rate"  : 0,
+            "cache_hit_rate"   : 0,
+            "served_from_breakdown": {}
         }
-    return results
+
+    total         = len(request_logs)
+    avg_latency   = round(sum(r['latency_ms'] for r in request_logs) / total, 2)
+    cold_starts   = sum(1 for r in request_logs if r['is_cold_start'])
+    cache_hits    = sum(1 for r in request_logs if r['served_from'] == 'cache')
+
+    served_breakdown = {}
+    for r in request_logs:
+        served_breakdown[r['served_from']] = served_breakdown.get(r['served_from'], 0) + 1
+
+    return {
+        "total_requests"      : total,
+        "avg_latency_ms"      : avg_latency,
+        "cold_start_rate"     : round(cold_starts / total * 100, 1),
+        "cache_hit_rate"      : round(cache_hits / total * 100, 1),
+        "served_from_breakdown": served_breakdown,
+        "recent_requests"     : request_logs[-10:]
+    }
+
+# ── Monitoring logs endpoint ──────────────────────────
+@app.get("/monitoring/logs")
+def get_logs():
+    return {
+        "logs" : request_logs[-50:],
+        "total": len(request_logs)
+    }
