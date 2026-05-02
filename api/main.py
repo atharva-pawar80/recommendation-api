@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 from api.schemas import (
     RecommendationRequest,
     RecommendationResponse,
@@ -7,6 +9,8 @@ from api.schemas import (
 )
 from api.recommender import Recommender
 import time
+import json
+from datetime import datetime
 
 # ── App setup ─────────────────────────────────────────
 app        = FastAPI(
