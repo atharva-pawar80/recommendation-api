@@ -13,11 +13,26 @@ import json
 from datetime import datetime
 
 # ── App setup ─────────────────────────────────────────
-app        = FastAPI(
+app = FastAPI(
     title       = "Product Recommendation API",
     description = "Real-time product recommendations using ALS collaborative filtering",
     version     = "1.0.0"
 )
+
+# ── CORS middleware ───────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+# ── Prometheus metrics ────────────────────────────────
+Instrumentator().instrument(app).expose(app)
+
+# ── Request log storage (in memory) ──────────────────
+request_logs = []
+MAX_LOGS     = 1000
 recommender = Recommender()
 
 # ── Startup event ─────────────────────────────────────
