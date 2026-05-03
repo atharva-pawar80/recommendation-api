@@ -1,3 +1,5 @@
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -18,7 +20,10 @@ app = FastAPI(
     description = "Real-time product recommendations using ALS collaborative filtering",
     version     = "1.0.0"
 )
-
+# ── Dashboard route ───────────────────────────────────
+@app.get("/")
+def serve_dashboard():
+    return FileResponse("dashboard.html")
 # ── CORS middleware ───────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
